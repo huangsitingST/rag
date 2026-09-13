@@ -1,0 +1,114 @@
+```mermaid
+classDiagram
+    direction LR
+
+    class rag_roles {
+        <<collection>>
+        +string _id
+        +string roleCode
+        +string roleName
+        +string description
+        +string status
+        +date createdAt
+        +date updatedAt
+    }
+
+    class rag_users {
+        <<collection>>
+        +string _id
+        +string tenantId
+        +string username
+        +string passwordHash
+        +string displayName
+        +string roleCode
+        +string status
+        +date lastLoginAt
+        +date createdAt
+        +date updatedAt
+    }
+
+    class rag_conversations {
+        <<collection>>
+        +string _id
+        +string conversationId
+        +string userId
+        +string roleCode
+        +string tenantId
+        +string userName
+        +string title
+        +date createdAt
+        +date updatedAt
+        +int messageCount
+    }
+
+    class rag_messages {
+        <<collection>>
+        +string _id
+        +string id
+        +string conversationId
+        +string userId
+        +string roleCode
+        +string tenantId
+        +string question
+        +string userName
+        +date createdAt
+        +string status
+        +MessageResult result
+        +string errorMessage
+    }
+
+    class MessageResult {
+        <<embedded document>>
+        +string status
+        +string answer
+        +SourceItem[] sources
+        +Pipeline pipeline
+    }
+
+    class SourceItem {
+        <<embedded document>>
+        +string chunkId
+        +string documentId
+        +string title
+        +int version
+        +int chunkIndex
+        +string sourcePath
+        +string content
+    }
+
+    class Pipeline {
+        <<embedded document>>
+        +string permissionFilter
+        +int recalledCount
+        +int rerankedCount
+        +int latencyMs
+        +Candidate[] candidates
+    }
+
+    class Candidate {
+        <<embedded document>>
+        +int rank
+        +string chunkId
+        +string title
+        +int version
+        +number retrievalScore
+        +number rerankScore
+        +string content
+    }
+
+    rag_roles "1" ..> "0..*" rag_users : roleCode
+    rag_users "1" ..> "0..*" rag_conversations : userId
+    rag_conversations "1" ..> "0..*" rag_messages : conversationId
+    rag_users "1" ..> "0..*" rag_messages : userId 快照
+    rag_roles "1" ..> "0..*" rag_messages : roleCode 快照
+
+    rag_messages *-- MessageResult : embeds
+    MessageResult *-- "0..*" SourceItem : sources
+    MessageResult *-- Pipeline : pipeline
+    Pipeline *-- "0..*" Candidate : candidates
+
+    note for rag_roles "roleCode 仅允许 teacher、service_staff<br/>唯一索引：roleCode"
+    note for rag_users "唯一索引：tenantId + username<br/>普通索引：tenantId + roleCode + status"
+    note for rag_conversations "唯一索引：conversationId<br/>索引：userId/roleCode + updatedAt"
+    note for rag_messages "唯一索引：id<br/>索引：conversationId、userId、roleCode、result.status + createdAt"
+```
