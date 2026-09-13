@@ -14,7 +14,7 @@ const user: AuthUser = {
   id: "admin-1",
   username: "admin",
   name: "管理员",
-  role: "admin",
+  role: "teacher",
   roleCode: "teacher",
 };
 
@@ -70,8 +70,7 @@ function activeRow(
   overrides: Partial<KnowledgeChunkRow> = {},
 ): KnowledgeChunkRow {
   return {
-    chunk_id: "bluewhale:doc-1:v1:0:hash",
-    tenant_id: "bluewhale",
+    chunk_id: "doc-1:v1:0:hash",
     document_id: "doc-1",
     version: 1,
     chunk_index: 0,
@@ -79,7 +78,7 @@ function activeRow(
     department_id: "customer-service",
     visibility: "company",
     title: "退款规则",
-    source_path: "bluewhale/doc-1/v1.md",
+    source_path: "doc-1/v1.md",
     checksum: "old-hash",
     content: "退款金额超过 2000 元时，需要人工审核。",
     dense_vector: [0.1, 0.2, 0.3],
@@ -100,15 +99,12 @@ describe("DocumentService", () => {
     ]);
     expect(milvus.insertChunks).toHaveBeenCalledTimes(1);
     expect(milvus.insertChunks.mock.calls[0][0][0]).toMatchObject({
-      tenant_id: "bluewhale",
       version: 1,
       is_active: false,
       content: "退款规则\n\n退款金额超过 2000 元时，需要人工审核。",
     });
     expect(milvus.setActive).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ tenantId: "bluewhale" }),
-      ]),
+      expect.arrayContaining([expect.any(String)]),
       true,
     );
   });
@@ -150,14 +146,12 @@ describe("DocumentService", () => {
     });
     expect(milvus.setActive).toHaveBeenNthCalledWith(
       1,
-      [{ chunkId: oldRow.chunk_id, tenantId: "bluewhale" }],
+      [oldRow.chunk_id],
       false,
     );
     expect(milvus.setActive).toHaveBeenNthCalledWith(
       2,
-      expect.arrayContaining([
-        expect.objectContaining({ tenantId: "bluewhale" }),
-      ]),
+      expect.arrayContaining([expect.any(String)]),
       true,
     );
   });
@@ -165,7 +159,7 @@ describe("DocumentService", () => {
   it("删除文档时保留历史数据，只关闭当前生效 Chunk", async () => {
     const oldRow = activeRow({ is_active: false, version: 1 });
     const currentRow = activeRow({
-      chunk_id: "bluewhale:doc-1:v2:0:hash",
+      chunk_id: "doc-1:v2:0:hash",
       version: 2,
       is_active: true,
     });
@@ -174,9 +168,6 @@ describe("DocumentService", () => {
     const result = await service.deleteDocument(user, "doc-1");
 
     expect(result.status).toBe("deleted");
-    expect(milvus.setActive).toHaveBeenCalledWith(
-      [{ chunkId: currentRow.chunk_id, tenantId: "bluewhale" }],
-      false,
-    );
+    expect(milvus.setActive).toHaveBeenCalledWith([currentRow.chunk_id], false);
   });
 });

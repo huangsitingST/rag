@@ -12,12 +12,12 @@ export function equal(field: string, value: string): string {
 
 /**
  * 根据服务端确认的用户身份生成检索权限条件。
- * 管理员可查看全部文档，员工只能查看企业公开和本部门文档。
+ * 教师可查看全部文档，企业服务人员只能查看企业公开和本部门文档。
  */
 export function buildPermissionFilter(user: AuthUser): string {
 	const active = 'is_active == true'
 
-	if (user.role === 'admin') {
+	if (user.role === 'teacher') {
 		return active
 	}
 

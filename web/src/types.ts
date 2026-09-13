@@ -5,7 +5,7 @@ export interface UserProfile {
 	name: string
 	departmentId: string
 	departmentName: string
-	role: 'admin' | 'employee'
+	role: 'teacher' | 'service_staff'
 	roleCode: 'teacher' | 'service_staff'
 }
 

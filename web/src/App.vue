@@ -88,7 +88,7 @@ const suggestions = [
 const activeUser = computed(() =>
 	users.value.find((user) => user.token === activeToken.value)
 )
-const isAdmin = computed(() => activeUser.value?.role === 'admin')
+const isAdmin = computed(() => activeUser.value?.role === 'teacher')
 const companyDocumentCount = computed(
 	() => documents.value.filter((item) => item.visibility === 'company').length
 )
@@ -564,7 +564,7 @@ function formatDate(timestamp: number) {
 								<Clock3 :size="14" />{{ conversationTurns.length }} 条记录
 							</span>
 							<span>
-								<ShieldCheck :size="14" />{{ activeUser?.role === 'admin' ? '管理员权限' : activeUser?.departmentName }}
+								<ShieldCheck :size="14" />{{ activeUser?.role === 'teacher' ? '教师权限' : activeUser?.departmentName }}
 							</span>
 						</div>
 						<button v-if="conversationTurns.length" class="icon-button" title="清空对话记录"

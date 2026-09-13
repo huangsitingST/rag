@@ -10,8 +10,6 @@ export interface UserDocument extends Document {
   displayName: string;
   roleCode: UserRoleCode;
   status: "active" | "disabled";
-  departmentId: string;
-  departmentName: string;
   lastLoginAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
