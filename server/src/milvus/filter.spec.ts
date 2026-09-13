@@ -1,20 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import type { DemoUser } from '../auth/auth.types.js'
+import type { AuthUser } from '../auth/auth.types.js'
 import {
 	buildDocumentFilter,
 	buildPermissionFilter,
 	escapeFilterValue
 } from './filter.js'
 
-const employee: DemoUser = {
+const employee: AuthUser = {
 	token: 'token',
 	id: 'user-1',
+	username: 'employee',
 	name: '测试用户',
 	tenantId: 'bluewhale',
 	tenantName: '蓝鲸科技',
 	departmentId: 'finance',
 	departmentName: '财务部',
-	role: 'employee'
+	role: 'employee',
+	roleCode: 'service_staff'
 }
 
 describe('Milvus permission filter', () => {

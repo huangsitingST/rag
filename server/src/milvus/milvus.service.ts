@@ -13,13 +13,12 @@ import {
 	MilvusClient,
 	RRFRanker
 } from '@zilliz/milvus2-sdk-node'
-import type { DemoUser } from '../auth/auth.types.js'
+import type { AuthUser } from '../auth/auth.types.js'
 import { buildPermissionFilter } from './filter.js'
 import type { KnowledgeChunkRow, RetrievedChunk } from './milvus.types.js'
 
 const OUTPUT_FIELDS = [
 	'chunk_id',
-	'tenant_id',
 	'document_id',
 	'version',
 	'chunk_index',
@@ -106,20 +105,12 @@ export class MilvusService implements OnModuleInit, OnApplicationShutdown {
 			// Collection 只在首次启动时创建，后续启动直接加载已有数据。
 			const result = await this.client.createCollection({
 				collection_name: this.collectionName,
-				num_partitions: 16,
 				fields: [
-					// Chunk ID 是主键，tenant_id 作为 Partition Key 参与租户路由。
 					{
 						name: 'chunk_id',
 						data_type: DataType.VarChar,
 						is_primary_key: true,
 						max_length: 256
-					},
-					{
-						name: 'tenant_id',
-						data_type: DataType.VarChar,
-						max_length: 64,
-						is_partition_key: true
 					},
 					{
 						name: 'document_id',
@@ -242,20 +233,18 @@ export class MilvusService implements OnModuleInit, OnApplicationShutdown {
 
 	/**
 	 * 通过 Partial Upsert 切换一组 Chunk 的生效状态。
-	 * tenant_id 必须一起提供，以便 Milvus 正确路由 Partition Key。
 	 */
 	async setActive(
-		rows: Array<{ chunkId: string; tenantId: string }>,
+		chunkIds: string[],
 		isActive: boolean
 	): Promise<void> {
-		if (rows.length === 0) return
+		if (chunkIds.length === 0) return
 
 		const result = await this.client.upsert({
 			collection_name: this.collectionName,
 			partial_update: true,
-			data: rows.map((row) => ({
-				chunk_id: row.chunkId,
-				tenant_id: row.tenantId,
+			data: chunkIds.map((chunkId) => ({
+				chunk_id: chunkId,
 				is_active: isActive
 			}))
 		})
@@ -268,7 +257,7 @@ export class MilvusService implements OnModuleInit, OnApplicationShutdown {
 	 * 两路召回使用同一条权限 Filter，再通过 RRF 融合排名。
 	 */
 	async hybridSearch(
-		user: DemoUser,
+		user: AuthUser,
 		question: string,
 		queryVector: number[],
 		limit = 8
@@ -307,7 +296,6 @@ export class MilvusService implements OnModuleInit, OnApplicationShutdown {
 	private toRetrievedChunk(row: Record<string, unknown>): RetrievedChunk {
 		return {
 			chunkId: String(row.chunk_id ?? row.id),
-			tenantId: String(row.tenant_id),
 			documentId: String(row.document_id),
 			version: Number(row.version),
 			chunkIndex: Number(row.chunk_index),

@@ -1,6 +1,5 @@
 export interface KnowledgeChunkRow extends Record<string, any> {
 	chunk_id: string
-	tenant_id: string
 	document_id: string
 	version: number
 	chunk_index: number
@@ -17,7 +16,6 @@ export interface KnowledgeChunkRow extends Record<string, any> {
 
 export interface RetrievedChunk {
 	chunkId: string
-	tenantId: string
 	documentId: string
 	version: number
 	chunkIndex: number

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { AiService } from '../ai/ai.service.js'
-import type { DemoUser } from '../auth/auth.types.js'
+import type { AuthUser } from '../auth/auth.types.js'
 import { MilvusService } from '../milvus/milvus.service.js'
 
 @Injectable()
@@ -14,7 +14,7 @@ export class KnowledgeService {
 	 * 执行一次完整的企业知识库问答。
 	 * 流程包括问题向量化、权限内混合检索、Rerank、答案生成和来源绑定。
 	 */
-	async query(user: DemoUser, question: string) {
+	async query(user: AuthUser, question: string) {
 		const startedAt = performance.now()
 
 		// 用户问题的向量用于 Dense 路线，原始文本同时用于 BM25 路线。

@@ -1,12 +1,12 @@
-export interface DemoUser {
+export interface UserProfile {
 	token: string
 	id: string
+	username: string
 	name: string
-	tenantId: string
-	tenantName: string
 	departmentId: string
 	departmentName: string
 	role: 'admin' | 'employee'
+	roleCode: 'teacher' | 'service_staff'
 }
 
 export interface DocumentSummary {

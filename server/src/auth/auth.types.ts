@@ -1,20 +1,19 @@
-export type UserRole = 'admin' | 'employee'
+export type UserRole = "teacher" | "service_staff";
+export type UserRoleCode = "teacher" | "service_staff";
 
-export interface DemoUser {
-	token: string
-	id: string
-	name: string
-	tenantId: string
-	tenantName: string
-	departmentId: string
-	departmentName: string
-	role: UserRole
+export interface AuthUser {
+  token: string;
+  id: string;
+  username: string;
+  name: string;
+  role: UserRole;
+  roleCode: UserRoleCode;
 }
 
 declare global {
-	namespace Express {
-		interface Request {
-			user?: DemoUser
-		}
-	}
+  namespace Express {
+    interface Request {
+      user?: AuthUser;
+    }
+  }
 }

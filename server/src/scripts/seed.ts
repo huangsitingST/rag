@@ -2,33 +2,33 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from '../app.module.js'
-import { DEMO_USER_BY_TOKEN } from '../auth/demo-users.js'
+import { UsersService } from '../auth/users.service.js'
 import { DocumentService } from '../documents/document.service.js'
 
 const samples = [
 	{
-		token: 'demo-bluewhale-admin',
+		username: 'chenchen',
 		fileName: 'bluewhale-company-refund.md',
 		title: '蓝鲸科技退款规则',
 		departmentId: 'customer-service',
 		visibility: 'company' as const
 	},
 	{
-		token: 'demo-bluewhale-admin',
+		username: 'chenchen',
 		fileName: 'bluewhale-customer-service.md',
 		title: '客服人工审核流程',
 		departmentId: 'customer-service',
 		visibility: 'department' as const
 	},
 	{
-		token: 'demo-bluewhale-admin',
+		username: 'chenchen',
 		fileName: 'bluewhale-finance.md',
 		title: '财务对账与大额退款规则',
 		departmentId: 'finance',
 		visibility: 'department' as const
 	},
 	{
-		token: 'demo-starlight-admin',
+		username: 'xuyan',
 		fileName: 'starlight-promotion.md',
 		title: '星河零售会员活动',
 		departmentId: 'marketing',
@@ -47,11 +47,12 @@ async function main() {
 
 	try {
 		const documents = app.get(DocumentService)
+		const users = app.get(UsersService)
 		const sampleRoot = path.resolve(process.cwd(), '../sample-documents')
 
 		for (const sample of samples) {
-			const user = DEMO_USER_BY_TOKEN.get(sample.token)
-			if (!user) throw new Error(`没有找到演示用户：${sample.token}`)
+			const user = await users.findByUsername(sample.username)
+			if (!user) throw new Error(`没有找到数据库用户：${sample.username}`)
 
 			const content = await readFile(path.join(sampleRoot, sample.fileName))
 			// 使用对应租户管理员查询文档，避免跨租户判断同名数据。

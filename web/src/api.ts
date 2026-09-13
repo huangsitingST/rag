@@ -1,4 +1,4 @@
-import type { DemoUser, DocumentSummary, QueryResult } from './types'
+import type { DocumentSummary, QueryResult, UserProfile } from './types'
 
 /**
  * 统一发送 API 请求并转换后端错误信息。
@@ -28,9 +28,9 @@ function auth(token: string): HeadersInit {
 	return { Authorization: `Bearer ${token}` }
 }
 
-/** 获取前端身份切换器使用的演示用户。 */
+/** 从后端数据库获取身份切换器使用的启用用户。 */
 export function getUsers() {
-	return request<DemoUser[]>('/api/session/users')
+	return request<UserProfile[]>('/api/session/users')
 }
 
 /** 获取后端服务状态。 */

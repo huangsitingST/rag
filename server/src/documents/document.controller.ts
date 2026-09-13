@@ -13,20 +13,20 @@ import {
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { AdminGuard } from '../auth/admin.guard.js'
+import type { AuthUser } from '../auth/auth.types.js'
 import { CurrentUser } from '../auth/current-user.decorator.js'
-import { DemoAuthGuard } from '../auth/demo-auth.guard.js'
-import type { DemoUser } from '../auth/auth.types.js'
+import { DatabaseAuthGuard } from '../auth/database-auth.guard.js'
 import { SaveDocumentDto } from './document.dto.js'
 import { DocumentService } from './document.service.js'
 
 @Controller('documents')
-@UseGuards(DemoAuthGuard)
+@UseGuards(DatabaseAuthGuard)
 export class DocumentController {
 	constructor(private readonly documents: DocumentService) {}
 
 	/** 返回当前身份能够访问的生效文档。 */
 	@Get()
-	list(@CurrentUser() user: DemoUser) {
+	list(@CurrentUser() user: AuthUser) {
 		return this.documents.listDocuments(user)
 	}
 
@@ -34,7 +34,7 @@ export class DocumentController {
 	@Get(':documentId/versions')
 	@UseGuards(AdminGuard)
 	versions(
-		@CurrentUser() user: DemoUser,
+		@CurrentUser() user: AuthUser,
 		@Param('documentId') documentId: string
 	) {
 		return this.documents.listVersions(user, documentId)
@@ -45,7 +45,7 @@ export class DocumentController {
 	@UseGuards(AdminGuard)
 	@UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2_000_000 } }))
 	create(
-		@CurrentUser() user: DemoUser,
+		@CurrentUser() user: AuthUser,
 		@Body() body: SaveDocumentDto,
 		@UploadedFile() file?: Express.Multer.File
 	) {
@@ -62,7 +62,7 @@ export class DocumentController {
 	@UseGuards(AdminGuard)
 	@UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2_000_000 } }))
 	update(
-		@CurrentUser() user: DemoUser,
+		@CurrentUser() user: AuthUser,
 		@Param('documentId') documentId: string,
 		@Body() body: SaveDocumentDto,
 		@UploadedFile() file?: Express.Multer.File
@@ -79,7 +79,7 @@ export class DocumentController {
 	@Delete(':documentId')
 	@UseGuards(AdminGuard)
 	delete(
-		@CurrentUser() user: DemoUser,
+		@CurrentUser() user: AuthUser,
 		@Param('documentId') documentId: string
 	) {
 		return this.documents.deleteDocument(user, documentId)

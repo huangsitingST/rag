@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common'
 import { AdminGuard } from './admin.guard.js'
-import { DemoAuthGuard } from './demo-auth.guard.js'
+import { DatabaseAuthGuard } from './database-auth.guard.js'
 import { SessionController } from './session.controller.js'
+import { UsersService } from './users.service.js'
 
 @Module({
 	controllers: [SessionController],
-	providers: [DemoAuthGuard, AdminGuard],
-	exports: [DemoAuthGuard, AdminGuard]
+	providers: [UsersService, DatabaseAuthGuard, AdminGuard],
+	exports: [UsersService, DatabaseAuthGuard, AdminGuard]
 })
 export class AuthModule {}

@@ -1,19 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { AiService } from '../ai/ai.service.js'
-import type { DemoUser } from '../auth/auth.types.js'
+import type { AuthUser } from '../auth/auth.types.js'
 import type { MilvusService } from '../milvus/milvus.service.js'
 import type { RetrievedChunk } from '../milvus/milvus.types.js'
 import { KnowledgeService } from './knowledge.service.js'
 
-const user: DemoUser = {
+const user: AuthUser = {
 	token: 'token',
 	id: 'u-1',
+	username: 'employee',
 	name: '测试用户',
 	tenantId: 'bluewhale',
 	tenantName: '蓝鲸科技',
 	departmentId: 'finance',
 	departmentName: '财务部',
-	role: 'employee'
+	role: 'employee',
+	roleCode: 'service_staff'
 }
 
 const chunk: RetrievedChunk = {

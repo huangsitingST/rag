@@ -33,7 +33,7 @@ import {
 	queryKnowledge,
 	saveDocument
 } from './api'
-import type { DemoUser, DocumentSummary, QueryResult } from './types'
+import type { DocumentSummary, QueryResult, UserProfile } from './types'
 
 type DocumentFilter = 'all' | 'company' | 'department'
 type MobileView = 'query' | 'documents'
@@ -49,7 +49,7 @@ interface ConversationTurn {
 	error?: string
 }
 
-const users = ref<DemoUser[]>([])
+const users = ref<UserProfile[]>([])
 const activeToken = ref('')
 const userMenuOpen = ref(false)
 const userSwitcherRef = ref<HTMLElement | null>(null)
@@ -147,7 +147,7 @@ async function checkHealth() {
 /**
  * 切换演示身份后加载对应身份的历史问答，并重新请求可访问文档。
  */
-async function changeUser(user: DemoUser) {
+async function changeUser(user: UserProfile) {
 	userMenuOpen.value = false
 	if (user.token === activeToken.value) return
 
@@ -404,7 +404,9 @@ function formatDate(timestamp: number) {
 	<div class="app-shell">
 		<header class="topbar">
 			<div class="brand">
-				<div class="brand-mark"><BookOpenText :size="20" /></div>
+				<div class="brand-mark">
+					<BookOpenText :size="20" />
+				</div>
 				<div class="brand-copy">
 					<strong>Knowledge Hub</strong>
 					<span>企业知识中台</span>
@@ -412,7 +414,7 @@ function formatDate(timestamp: number) {
 			</div>
 
 			<div class="breadcrumb" v-if="activeUser">
-				<span>{{ activeUser.tenantName }}</span>
+				<span>{{ activeUser.departmentName }}</span>
 				<i>/</i>
 				<strong>知识库工作台</strong>
 			</div>
@@ -422,17 +424,11 @@ function formatDate(timestamp: number) {
 					<span></span>{{ serverOnline ? '运行中' : '服务离线' }}
 				</div>
 				<div ref="userSwitcherRef" class="identity-switcher">
-					<button
-						type="button"
-						class="identity-select"
-						aria-haspopup="listbox"
-						:aria-expanded="userMenuOpen"
-						@click="userMenuOpen = !userMenuOpen"
-					>
+					<button type="button" class="identity-select" aria-haspopup="listbox" :aria-expanded="userMenuOpen"
+						@click="userMenuOpen = !userMenuOpen">
 						<div class="identity-avatar">{{ activeUser?.name.slice(0, 1) || 'U' }}</div>
 						<div class="identity-copy">
 							<strong>{{ activeUser?.name || '选择身份' }}</strong>
-							<span>{{ activeUser?.departmentName || '加载用户中' }}</span>
 						</div>
 						<ChevronDown :size="15" :class="{ open: userMenuOpen }" />
 					</button>
@@ -443,20 +439,13 @@ function formatDate(timestamp: number) {
 							<span>切换演示身份</span>
 						</div>
 						<div role="listbox" aria-label="演示用户">
-							<button
-								v-for="user in users"
-								:key="user.token"
-								type="button"
-								class="identity-option"
-								:class="{ active: user.token === activeToken }"
-								role="option"
-								:aria-selected="user.token === activeToken"
-								@click="changeUser(user)"
-							>
+							<button v-for="user in users" :key="user.token" type="button" class="identity-option"
+								:class="{ active: user.token === activeToken }" role="option"
+								:aria-selected="user.token === activeToken" @click="changeUser(user)">
 								<div class="identity-avatar">{{ user.name.slice(0, 1) }}</div>
 								<div class="identity-option-copy">
 									<strong>{{ user.name }}</strong>
-									<span>{{ user.tenantName }} · {{ user.departmentName }}</span>
+									<span>{{ user.departmentName }}</span>
 								</div>
 								<CheckCircle2 v-if="user.token === activeToken" :size="16" />
 							</button>
@@ -469,7 +458,9 @@ function formatDate(timestamp: number) {
 		<div v-if="error" class="error-banner">
 			<CircleAlert :size="17" />
 			<span>{{ error }}</span>
-			<button aria-label="关闭错误" @click="error = ''"><X :size="16" /></button>
+			<button aria-label="关闭错误" @click="error = ''">
+				<X :size="16" />
+			</button>
 		</div>
 
 		<nav class="mobile-tabs" aria-label="移动端视图切换">
@@ -512,7 +503,8 @@ function formatDate(timestamp: number) {
 				<div class="filter-tabs">
 					<button :class="{ active: documentFilter === 'all' }" @click="documentFilter = 'all'">全部</button>
 					<button :class="{ active: documentFilter === 'company' }" @click="documentFilter = 'company'">企业</button>
-					<button :class="{ active: documentFilter === 'department' }" @click="documentFilter = 'department'">部门</button>
+					<button :class="{ active: documentFilter === 'department' }"
+						@click="documentFilter = 'department'">部门</button>
 				</div>
 
 				<div v-if="loadingDocuments" class="panel-loading">
@@ -523,12 +515,8 @@ function formatDate(timestamp: number) {
 					<span>暂无匹配文档</span>
 				</div>
 				<div v-else class="document-list">
-					<article
-						v-for="document in filteredDocuments"
-						:key="document.documentId"
-						class="document-row"
-						:class="{ 'has-actions': isAdmin }"
-					>
+					<article v-for="document in filteredDocuments" :key="document.documentId" class="document-row"
+						:class="{ 'has-actions': isAdmin }">
 						<div class="document-icon">
 							<Globe2 v-if="document.visibility === 'company'" :size="17" />
 							<LockKeyhole v-else :size="17" />
@@ -540,27 +528,17 @@ function formatDate(timestamp: number) {
 								<span>{{ document.chunkCount }} chunks</span>
 								<span>{{ document.visibility === 'company' ? '全员可见' : document.departmentId }}</span>
 							</div>
-							<time><Clock3 :size="12" />{{ formatDate(document.updatedAt) }}</time>
+							<time>
+								<Clock3 :size="12" />{{ formatDate(document.updatedAt) }}
+							</time>
 						</div>
 						<div v-if="isAdmin" class="row-actions">
-							<button
-								class="icon-button row-action"
-								title="发布新版本"
-								@click="openUpdate(document)"
-							>
+							<button class="icon-button row-action" title="发布新版本" @click="openUpdate(document)">
 								<Upload :size="15" />
 							</button>
-							<button
-								class="icon-button row-action danger"
-								title="删除文档"
-								:disabled="deletingDocumentId === document.documentId"
-								@click="deleteExistingDocument(document)"
-							>
-								<LoaderCircle
-									v-if="deletingDocumentId === document.documentId"
-									:size="15"
-									class="spinning"
-								/>
+							<button class="icon-button row-action danger" title="删除文档"
+								:disabled="deletingDocumentId === document.documentId" @click="deleteExistingDocument(document)">
+								<LoaderCircle v-if="deletingDocumentId === document.documentId" :size="15" class="spinning" />
 								<Trash2 v-else :size="15" />
 							</button>
 						</div>
@@ -576,17 +554,21 @@ function formatDate(timestamp: number) {
 					</div>
 					<div class="query-heading-actions">
 						<div class="pipeline-labels">
-							<span><Layers3 :size="14" />Hybrid Search</span>
-							<span><Sparkles :size="14" />Rerank</span>
-							<span><Clock3 :size="14" />{{ conversationTurns.length }} 条记录</span>
-							<span><ShieldCheck :size="14" />{{ activeUser?.role === 'admin' ? '管理员权限' : activeUser?.departmentName }}</span>
+							<span>
+								<Layers3 :size="14" />Hybrid Search
+							</span>
+							<span>
+								<Sparkles :size="14" />Rerank
+							</span>
+							<span>
+								<Clock3 :size="14" />{{ conversationTurns.length }} 条记录
+							</span>
+							<span>
+								<ShieldCheck :size="14" />{{ activeUser?.role === 'admin' ? '管理员权限' : activeUser?.departmentName }}
+							</span>
 						</div>
-						<button
-							v-if="conversationTurns.length"
-							class="icon-button"
-							title="清空对话记录"
-							@click="clearConversationHistory"
-						>
+						<button v-if="conversationTurns.length" class="icon-button" title="清空对话记录"
+							@click="clearConversationHistory">
 							<Trash2 :size="15" />
 						</button>
 					</div>
@@ -594,11 +576,14 @@ function formatDate(timestamp: number) {
 
 				<div ref="conversationRef" class="conversation">
 					<div v-if="conversationTurns.length === 0" class="query-empty">
-						<div class="empty-symbol"><Bot :size="27" /></div>
+						<div class="empty-symbol">
+							<Bot :size="27" />
+						</div>
 						<h2>从企业知识中查找答案</h2>
 						<div class="suggestion-list">
 							<button v-for="item in suggestions" :key="item" @click="ask(item)">
-								<span>{{ item }}</span><SendHorizontal :size="14" />
+								<span>{{ item }}</span>
+								<SendHorizontal :size="14" />
 							</button>
 						</div>
 					</div>
@@ -613,15 +598,21 @@ function formatDate(timestamp: number) {
 						</div>
 
 						<div v-if="turn.status === 'pending'" class="assistant-response loading-response">
-							<div class="message-avatar assistant"><Bot :size="17" /></div>
+							<div class="message-avatar assistant">
+								<Bot :size="17" />
+							</div>
 							<div>
 								<span>知识库助手</span>
-								<p><LoaderCircle :size="16" class="spinning" />正在检索并核对企业知识</p>
+								<p>
+									<LoaderCircle :size="16" class="spinning" />正在检索并核对企业知识
+								</p>
 							</div>
 						</div>
 
 						<div v-else-if="turn.status === 'error'" class="assistant-response result-response error-response">
-							<div class="message-avatar assistant"><CircleAlert :size="17" /></div>
+							<div class="message-avatar assistant">
+								<CircleAlert :size="17" />
+							</div>
 							<div class="response-content">
 								<div class="message-heading">
 									<div><strong>知识库助手</strong><span>调用失败</span></div>
@@ -631,7 +622,9 @@ function formatDate(timestamp: number) {
 						</div>
 
 						<div v-else-if="turn.result" class="assistant-response result-response">
-							<div class="message-avatar assistant"><Bot :size="17" /></div>
+							<div class="message-avatar assistant">
+								<Bot :size="17" />
+							</div>
 							<div class="response-content">
 								<div class="message-heading">
 									<div><strong>知识库助手</strong><span>{{ turn.result.pipeline.latencyMs }} ms</span></div>
@@ -663,15 +656,14 @@ function formatDate(timestamp: number) {
 
 								<details class="pipeline-details">
 									<summary>
-										<span><Database :size="14" />检索链路</span>
+										<span>
+											<Database :size="14" />检索链路
+										</span>
 										<b>{{ turn.result.pipeline.recalledCount }} 召回 · {{ turn.result.pipeline.rerankedCount }} 精排</b>
 									</summary>
 									<div class="filter-code">{{ turn.result.pipeline.permissionFilter }}</div>
-									<div
-										v-for="candidate in turn.result.pipeline.candidates"
-										:key="candidate.chunkId"
-										class="candidate-row"
-									>
+									<div v-for="candidate in turn.result.pipeline.candidates" :key="candidate.chunkId"
+										class="candidate-row">
 										<div><span>#{{ candidate.rank }}</span><strong>{{ candidate.title }}</strong></div>
 										<b>{{ candidate.rerankScore.toFixed(4) }}</b>
 									</div>
@@ -703,7 +695,9 @@ function formatDate(timestamp: number) {
 						<span class="section-kicker">DOCUMENT VERSION</span>
 						<h2>{{ editingDocument ? '发布文档新版本' : '新建知识文档' }}</h2>
 					</div>
-					<button type="button" class="icon-button" aria-label="关闭" @click="showDocumentModal = false"><X :size="18" /></button>
+					<button type="button" class="icon-button" aria-label="关闭" @click="showDocumentModal = false">
+						<X :size="18" />
+					</button>
 				</div>
 
 				<div class="form-grid">
@@ -718,7 +712,9 @@ function formatDate(timestamp: number) {
 				</div>
 
 				<label class="file-picker">
-					<div><Upload :size="20" /></div>
+					<div>
+						<Upload :size="20" />
+					</div>
 					<span>{{ selectedFile?.name || '选择 Markdown 文档' }}</span>
 					<small>支持 .md，单个文件不超过 2 MB</small>
 					<input type="file" accept=".md,text/markdown" required @change="chooseFile" />
