@@ -45,8 +45,6 @@ describe("UsersService", () => {
         id: "user-1",
         username: "admin",
         name: "管理员",
-        departmentId: "platform",
-        departmentName: "平台管理",
         role: "teacher",
         roleCode: "teacher",
       },

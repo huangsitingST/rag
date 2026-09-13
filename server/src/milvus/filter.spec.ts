@@ -17,9 +17,9 @@ const employee: AuthUser = {
 };
 
 describe("Milvus permission filter", () => {
-  it("把启用状态和部门权限放进检索条件", () => {
+  it("企业服务人员只能查看企业公开的启用文档", () => {
     expect(buildPermissionFilter(employee)).toBe(
-      'is_active == true and (visibility == "company" or department_id == "finance")',
+      'is_active == true and visibility == "company"',
     );
   });
 

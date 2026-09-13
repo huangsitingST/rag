@@ -299,7 +299,6 @@ export class MilvusService implements OnModuleInit, OnApplicationShutdown {
 			documentId: String(row.document_id),
 			version: Number(row.version),
 			chunkIndex: Number(row.chunk_index),
-			departmentId: String(row.department_id),
 			visibility: row.visibility as 'company' | 'department',
 			title: String(row.title),
 			sourcePath: String(row.source_path),

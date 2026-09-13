@@ -70,7 +70,6 @@ const savingDocument = ref(false)
 const deletingDocumentId = ref('')
 const editingDocument = ref<DocumentSummary | null>(null)
 const documentTitle = ref('')
-const departmentId = ref('customer-service')
 const visibility = ref<'company' | 'department'>('company')
 const selectedFile = ref<File | null>(null)
 const saveMessage = ref('')
@@ -239,7 +238,6 @@ async function ask(prefilledQuestion?: string) {
 function openCreate() {
 	editingDocument.value = null
 	documentTitle.value = ''
-	departmentId.value = 'customer-service'
 	visibility.value = 'company'
 	selectedFile.value = null
 	saveMessage.value = ''
@@ -250,7 +248,6 @@ function openCreate() {
 function openUpdate(document: DocumentSummary) {
 	editingDocument.value = document
 	documentTitle.value = document.title
-	departmentId.value = document.departmentId
 	visibility.value = document.visibility
 	selectedFile.value = null
 	saveMessage.value = ''
@@ -275,7 +272,6 @@ async function submitDocument() {
 			token: activeUser.value.token,
 			file: selectedFile.value,
 			title: documentTitle.value.trim(),
-			departmentId: departmentId.value.trim(),
 			visibility: visibility.value,
 			documentId: editingDocument.value?.documentId
 		})
@@ -702,13 +698,6 @@ function formatDate(timestamp: number) {
 
 				<div class="form-grid">
 					<label class="wide">文档标题<input v-model="documentTitle" required maxlength="120" /></label>
-					<label>归属部门<input v-model="departmentId" required maxlength="64" /></label>
-					<label>可见范围
-						<select v-model="visibility">
-							<option value="company">企业内公开</option>
-							<option value="department">仅归属部门</option>
-						</select>
-					</label>
 				</div>
 
 				<label class="file-picker">

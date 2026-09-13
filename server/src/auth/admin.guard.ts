@@ -12,8 +12,8 @@ export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
 
-    if (request.user?.role !== "service_staff") {
-      throw new ForbiddenException("只有企业管理员角色可以访问管理员接口。");
+    if (request.user?.role !== "teacher") {
+      throw new ForbiddenException("只有教师角色可以维护知识库文档。");
     }
 
     return true;

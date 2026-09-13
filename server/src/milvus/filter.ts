@@ -12,7 +12,7 @@ export function equal(field: string, value: string): string {
 
 /**
  * 根据服务端确认的用户身份生成检索权限条件。
- * 教师可查看全部文档，企业服务人员只能查看企业公开和本部门文档。
+ * 教师可查看全部文档，企业服务人员只能查看企业公开文档。
  */
 export function buildPermissionFilter(user: AuthUser): string {
 	const active = 'is_active == true'
@@ -21,8 +21,7 @@ export function buildPermissionFilter(user: AuthUser): string {
 		return active
 	}
 
-	const department = equal('department_id', user.departmentId)
-	return `${active} and (visibility == "company" or ${department})`
+	return `${active} and visibility == "company"`
 }
 
 /**

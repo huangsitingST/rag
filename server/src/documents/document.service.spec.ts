@@ -20,7 +20,6 @@ const user: AuthUser = {
 
 const input = {
   title: "退款规则",
-  departmentId: "customer-service",
   visibility: "company" as const,
   fileName: "refund.md",
   content: Buffer.from("# 退款规则\n\n退款金额超过 2000 元时，需要人工审核。"),
@@ -75,7 +74,6 @@ function activeRow(
     version: 1,
     chunk_index: 0,
     is_active: true,
-    department_id: "customer-service",
     visibility: "company",
     title: "退款规则",
     source_path: "doc-1/v1.md",
