@@ -19,7 +19,6 @@ const chunk: RetrievedChunk = {
   documentId: "document-1",
   version: 2,
   chunkIndex: 0,
-  departmentId: "finance",
   visibility: "department",
   title: "报销规则",
   sourcePath: "bluewhale/document-1/v2.md",

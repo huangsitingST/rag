@@ -3,7 +3,6 @@ export interface UserProfile {
 	id: string
 	username: string
 	name: string
-	departmentId: string
 	departmentName: string
 	role: 'teacher' | 'service_staff'
 	roleCode: 'teacher' | 'service_staff'
@@ -13,7 +12,6 @@ export interface DocumentSummary {
 	documentId: string
 	title: string
 	version: number
-	departmentId: string
 	visibility: 'company' | 'department'
 	checksum: string
 	sourcePath: string

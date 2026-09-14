@@ -1,5 +1,7 @@
 {
 	"editor.formatOnSave": false,
 	"editor.formatOnPaste": false,
-	"editor.formatOnType": false
+	"editor.formatOnType": false,
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true
 }

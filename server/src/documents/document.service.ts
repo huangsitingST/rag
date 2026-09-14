@@ -280,7 +280,6 @@ export class DocumentService {
           documentId: String(first.document_id),
           title: String(first.title),
           version: Number(first.version),
-          departmentId: String(first.department_id),
           visibility: first.visibility as "company" | "department",
           checksum: String(first.checksum),
           sourcePath: String(first.source_path),

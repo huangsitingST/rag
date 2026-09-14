@@ -4,7 +4,7 @@
 	"version": "1.0.0",
 	"scripts": {
 		"build": "nest build",
-		"start": "node dist/main.js",
+		"start": "nest build && node dist/main.js",
 		"start:dev": "nest start --watch",
 		"seed": "npm run build && node dist/scripts/seed.js",
 		"test": "vitest run",

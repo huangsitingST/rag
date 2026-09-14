@@ -23,7 +23,6 @@ const OUTPUT_FIELDS = [
 	'version',
 	'chunk_index',
 	'is_active',
-	'department_id',
 	'visibility',
 	'title',
 	'source_path',
@@ -120,11 +119,6 @@ export class MilvusService implements OnModuleInit, OnApplicationShutdown {
 					{ name: 'version', data_type: DataType.Int32 },
 					{ name: 'chunk_index', data_type: DataType.Int32 },
 					{ name: 'is_active', data_type: DataType.Bool },
-					{
-						name: 'department_id',
-						data_type: DataType.VarChar,
-						max_length: 64
-					},
 					{
 						name: 'visibility',
 						data_type: DataType.VarChar,

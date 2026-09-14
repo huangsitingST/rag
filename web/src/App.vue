@@ -96,8 +96,7 @@ const filteredDocuments = computed(() => {
 			document.visibility === documentFilter.value
 		const matchedKeyword =
 			!keyword ||
-			document.title.toLowerCase().includes(keyword) ||
-			document.departmentId.toLowerCase().includes(keyword)
+			document.title.toLowerCase().includes(keyword)
 		return matchedFilter && matchedKeyword
 	})
 })
@@ -540,11 +539,6 @@ function formatDate(timestamp: number) {
 							<div class="document-meta">
 								<span>v{{ document.version }}</span>
 								<span>{{ document.chunkCount }} chunks</span>
-								<span>{{
-									document.visibility === 'company'
-										? '全员可见'
-										: document.departmentId
-								}}</span>
 							</div>
 							<time>
 								<Clock3 :size="12" />{{ formatDate(document.updatedAt) }}

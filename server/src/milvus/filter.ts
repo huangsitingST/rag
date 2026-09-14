@@ -16,12 +16,7 @@ export function equal(field: string, value: string): string {
  */
 export function buildPermissionFilter(user: AuthUser): string {
 	const active = 'is_active == true'
-
-	if (user.role === 'service_staff') {
-		return active
-	}
-
-	return `${active} and visibility == "company"`
+	return `${active}`
 }
 
 /**
