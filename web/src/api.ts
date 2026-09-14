@@ -1,4 +1,10 @@
-import type { DocumentSummary, QueryResult, UserProfile } from './types'
+import type {
+	ConversationMessage,
+	ConversationSummary,
+	DocumentSummary,
+	QueryResult,
+	UserProfile
+} from './types'
 
 /**
  * 统一发送 API 请求并转换后端错误信息。
@@ -98,5 +104,74 @@ export function queryKnowledge(token: string, question: string) {
 			'Content-Type': 'application/json'
 		},
 		body: JSON.stringify({ question })
+	})
+}
+
+/** 获取当前用户的全部会话。 */
+export function getConversations(token: string) {
+	return request<ConversationSummary[]>('/api/conversations', {
+		headers: auth(token)
+	})
+}
+
+/** 新建一个保存在数据库中的会话。 */
+export function createConversation(token: string) {
+	return request<ConversationSummary>('/api/conversations', {
+		method: 'POST',
+		headers: {
+			...auth(token),
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({})
+	})
+}
+
+/** 获取指定会话的全部消息。 */
+export function getConversationMessages(token: string, conversationId: string) {
+	return request<ConversationMessage[]>(
+		`/api/conversations/${conversationId}/messages`,
+		{ headers: auth(token) }
+	)
+}
+
+/** 在指定会话中提问，后端会把问题、答案和来源一起保存。 */
+export function sendConversationMessage(
+	token: string,
+	conversationId: string,
+	question: string
+) {
+	return request<{
+		conversation: ConversationSummary
+		message: ConversationMessage
+	}>(`/api/conversations/${conversationId}/messages`, {
+		method: 'POST',
+		headers: {
+			...auth(token),
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({ question })
+	})
+}
+
+/** 删除一个会话及其消息。 */
+export function deleteConversation(token: string, conversationId: string) {
+	return request<{ status: string; conversationId: string }>(
+		`/api/conversations/${conversationId}`,
+		{
+			method: 'DELETE',
+			headers: auth(token)
+		}
+	)
+}
+
+/** 清空当前用户的全部会话与消息。 */
+export function clearConversations(token: string) {
+	return request<{
+		status: string
+		conversationCount: number
+		messageCount: number
+	}>('/api/conversations', {
+		method: 'DELETE',
+		headers: auth(token)
 	})
 }

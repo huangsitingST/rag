@@ -49,3 +49,22 @@ export interface QueryResult {
 		}>
 	}
 }
+
+export interface ConversationSummary {
+	id: string
+	title: string
+	createdAt: number
+	updatedAt: number
+	messageCount: number
+}
+
+export interface ConversationMessage {
+	id: string
+	conversationId: string
+	question: string
+	userName: string
+	createdAt: number
+	status: 'pending' | 'answered' | 'error'
+	result?: QueryResult
+	error?: string
+}

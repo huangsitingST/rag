@@ -22,10 +22,8 @@ describe("Milvus permission filter", () => {
     );
   });
 
-  it("教师只能查看企业公开的启用文档", () => {
-    expect(buildPermissionFilter(teacher)).toBe(
-      'is_active == true and visibility == "company"',
-    );
+  it("教师可以查看全部启用文档", () => {
+    expect(buildPermissionFilter(teacher)).toBe("is_active == true");
   });
 
   it("查询文档历史时可以包含非启用版本", () => {

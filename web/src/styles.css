@@ -289,6 +289,37 @@ h1, h2, h3, p { margin-top: 0; }
 .pipeline-labels { justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
 .pipeline-labels span { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; color: #68717b; background: #f7f8fa; border: 1px solid #e7e9ec; border-radius: 5px; font-size: 10px; }
 .pipeline-labels span:last-child { color: #215b45; background: #f1f8f5; border-color: #d8ebe3; }
+.conversation-tabs {
+	flex: none;
+	display: flex;
+	gap: 7px;
+	overflow-x: auto;
+	padding: 9px clamp(28px, 4vw, 58px);
+	background: #fafbfc;
+	border-bottom: 1px solid #edf0f2;
+	scrollbar-width: thin;
+}
+.conversation-tabs-loading { display: inline-flex; align-items: center; gap: 7px; color: #7b838d; font-size: 10px; white-space: nowrap; }
+.conversation-tab {
+	max-width: 220px;
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 9px;
+	color: #5e6671;
+	background: #fff;
+	border: 1px solid #e2e5e9;
+	border-radius: 6px;
+	text-align: left;
+}
+.conversation-tab:hover { color: #155eef; border-color: #b9cdfa; background: #f8faff; }
+.conversation-tab.active { color: #155eef; background: #edf3ff; border-color: #a9c1fa; }
+.conversation-tab > svg { flex: none; }
+.conversation-tab > span { min-width: 0; display: grid; gap: 2px; }
+.conversation-tab strong, .conversation-tab small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conversation-tab strong { font-size: 10px; font-weight: 650; }
+.conversation-tab small { color: #9299a2; font-size: 8px; }
 .conversation {
 	flex: 1;
 	min-height: 0;
@@ -475,6 +506,7 @@ h1, h2, h3, p { margin-top: 0; }
 	.query-heading h1, .library-heading h1 { font-size: 18px; }
 	.pipeline-labels span { display: inline-flex !important; }
 	.pipeline-labels span:not(:last-child) { display: none !important; }
+	.conversation-tabs { padding: 8px 16px; }
 	.conversation { padding: 24px 16px 18px; }
 	.composer-wrap { padding: 10px 12px 14px; }
 	.row-action { opacity: 1; }
@@ -484,6 +516,7 @@ h1, h2, h3, p { margin-top: 0; }
 	.identity-switcher { max-width: 265px; }
 	.query-heading { gap: 8px; }
 	.pipeline-labels span { max-width: 135px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.new-conversation-button { gap: 0; padding: 0 10px; font-size: 0; }
 	.user-question, .assistant-response { gap: 9px; }
 	.message-avatar { width: 28px; height: 28px; }
 	.form-grid { grid-template-columns: 1fr; }

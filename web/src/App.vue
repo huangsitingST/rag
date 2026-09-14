@@ -15,6 +15,8 @@ import {
 	Layers3,
 	LoaderCircle,
 	LockKeyhole,
+	MessageSquareText,
+	Plus,
 	RefreshCw,
 	Search,
 	SendHorizontal,
@@ -26,28 +28,26 @@ import {
 	X
 } from '@lucide/vue'
 import {
+	clearConversations,
+	createConversation,
 	deleteDocument,
+	getConversationMessages,
+	getConversations,
 	getDocuments,
 	getHealth,
 	getUsers,
-	queryKnowledge,
-	saveDocument
+	saveDocument,
+	sendConversationMessage
 } from './api'
-import type { DocumentSummary, QueryResult, UserProfile } from './types'
+import type {
+	ConversationMessage,
+	ConversationSummary,
+	DocumentSummary,
+	UserProfile
+} from './types'
 
 type DocumentFilter = 'all' | 'company' | 'department'
 type MobileView = 'query' | 'documents'
-type ConversationTurnStatus = 'pending' | 'answered' | 'error'
-
-interface ConversationTurn {
-	id: string
-	question: string
-	userName: string
-	createdAt: number
-	status: ConversationTurnStatus
-	result?: QueryResult
-	error?: string
-}
 
 const users = ref<UserProfile[]>([])
 const activeToken = ref('')
@@ -62,8 +62,12 @@ const error = ref('')
 const documentSearch = ref('')
 const documentFilter = ref<DocumentFilter>('all')
 const mobileView = ref<MobileView>('query')
-const conversationTurns = ref<ConversationTurn[]>([])
+const conversations = ref<ConversationSummary[]>([])
+const activeConversationId = ref('')
+const conversationTurns = ref<ConversationMessage[]>([])
 const conversationRef = ref<HTMLElement | null>(null)
+const loadingConversations = ref(false)
+const creatingConversation = ref(false)
 
 const showDocumentModal = ref(false)
 const savingDocument = ref(false)
@@ -74,9 +78,11 @@ const visibility = ref<'company' | 'department'>('company')
 const selectedFile = ref<File | null>(null)
 const saveMessage = ref('')
 let documentRequestId = 0
+let conversationRequestId = 0
+let conversationMessageRequestId = 0
 
 const ACTIVE_USER_STORAGE_KEY = 'enterprise-knowledge-active-user'
-const USER_HISTORY_PREFIX = 'enterprise-knowledge-history:'
+const ACTIVE_CONVERSATION_PREFIX = 'enterprise-knowledge-active-conversation:'
 
 const suggestions = [
 	'介绍一下爱学网这个系统',
@@ -111,12 +117,11 @@ onMounted(async () => {
 		const [userList] = await Promise.all([getUsers(), checkHealth()])
 		users.value = userList
 		const savedToken = localStorage.getItem(ACTIVE_USER_STORAGE_KEY)
-		activeToken.value =
-			userList.find((user) => user.token === savedToken)?.token ??
-			userList[0]?.token ??
-			''
-		restoreConversationHistory()
-		await loadDocuments()
+			activeToken.value =
+				userList.find((user) => user.token === savedToken)?.token ??
+				userList[0]?.token ??
+				''
+			await Promise.all([loadDocuments(), loadConversations()])
 	} catch (reason) {
 		setError(reason)
 	}
@@ -146,8 +151,10 @@ async function changeUser(user: UserProfile) {
 	activeToken.value = user.token
 	localStorage.setItem(ACTIVE_USER_STORAGE_KEY, user.token)
 	error.value = ''
-	restoreConversationHistory()
-	await loadDocuments()
+	conversations.value = []
+	activeConversationId.value = ''
+	conversationTurns.value = []
+	await Promise.all([loadDocuments(), loadConversations()])
 	await scrollConversationToBottom()
 }
 
@@ -189,6 +196,109 @@ async function loadDocuments() {
 	}
 }
 
+/** 加载当前用户的数据库会话，并恢复上次选择的会话。 */
+async function loadConversations() {
+	if (!activeToken.value) {
+		conversations.value = []
+		activeConversationId.value = ''
+		conversationTurns.value = []
+		return
+	}
+
+	const requestId = ++conversationRequestId
+	const requestedToken = activeToken.value
+	loadingConversations.value = true
+	try {
+		const conversationList = await getConversations(requestedToken)
+		if (
+			requestId !== conversationRequestId ||
+			requestedToken !== activeToken.value
+		)
+			return
+
+		conversations.value = conversationList
+		const savedId = localStorage.getItem(
+			getActiveConversationKey(requestedToken)
+		)
+		const nextId =
+			conversationList.find((conversation) => conversation.id === savedId)?.id ??
+			conversationList[0]?.id ??
+			''
+		activeConversationId.value = nextId
+		if (nextId) {
+			await loadConversationMessages(nextId)
+		} else {
+			conversationTurns.value = []
+		}
+	} catch (reason) {
+		if (requestId === conversationRequestId) setError(reason)
+	} finally {
+		if (requestId === conversationRequestId) loadingConversations.value = false
+	}
+}
+
+/** 新建数据库会话并切换到空白对话。 */
+async function startNewConversation() {
+	if (!activeToken.value || creatingConversation.value) return
+
+	creatingConversation.value = true
+	error.value = ''
+	try {
+		const conversation = await createConversation(activeToken.value)
+		conversations.value = [
+			conversation,
+			...conversations.value.filter((item) => item.id !== conversation.id)
+		]
+		activeConversationId.value = conversation.id
+		localStorage.setItem(
+			getActiveConversationKey(activeToken.value),
+			conversation.id
+		)
+		conversationTurns.value = []
+		await scrollConversationToBottom()
+	} catch (reason) {
+		setError(reason)
+	} finally {
+		creatingConversation.value = false
+	}
+}
+
+/** 切换当前会话并加载数据库中的消息。 */
+async function selectConversation(conversation: ConversationSummary) {
+	if (!activeToken.value || conversation.id === activeConversationId.value) return
+
+	activeConversationId.value = conversation.id
+	localStorage.setItem(
+		getActiveConversationKey(activeToken.value),
+		conversation.id
+	)
+	await loadConversationMessages(conversation.id)
+	await scrollConversationToBottom()
+}
+
+/** 从 MongoDB 读取指定会话的消息。 */
+async function loadConversationMessages(conversationId: string) {
+	if (!activeToken.value) return
+
+	const requestId = ++conversationMessageRequestId
+	const requestedToken = activeToken.value
+	try {
+		const messages = await getConversationMessages(
+			requestedToken,
+			conversationId
+		)
+		if (
+			requestId === conversationMessageRequestId &&
+			requestedToken === activeToken.value &&
+			conversationId === activeConversationId.value
+		) {
+			conversationTurns.value = messages
+		}
+	} catch (reason) {
+		if (requestId === conversationMessageRequestId) setError(reason)
+	}
+}
+
 /**
  * 提交企业知识库问题，并维护查询过程中的页面状态。
  *
@@ -198,8 +308,15 @@ async function ask(prefilledQuestion?: string) {
 	const submittedQuestion = (prefilledQuestion ?? question.value).trim()
 	if (!submittedQuestion || !activeToken.value || asking.value) return
 
-	const turn: ConversationTurn = {
+	if (!activeConversationId.value) {
+		await startNewConversation()
+	}
+	if (!activeConversationId.value) return
+
+	const conversationId = activeConversationId.value
+	const turn: ConversationMessage = {
 		id: createTurnId(),
+		conversationId,
 		question: submittedQuestion,
 		userName: activeUser.value?.name ?? '用户',
 		createdAt: Date.now(),
@@ -213,18 +330,35 @@ async function ask(prefilledQuestion?: string) {
 	await scrollConversationToBottom()
 
 	try {
-		turn.result = await queryKnowledge(activeToken.value, submittedQuestion)
-		turn.status = 'answered'
-		persistConversationHistory()
+		const response = await sendConversationMessage(
+			activeToken.value,
+			conversationId,
+			submittedQuestion
+		)
+		const index = conversationTurns.value.findIndex(
+			(item) => item.id === turn.id
+		)
+		if (index >= 0) conversationTurns.value[index] = response.message
+		upsertConversation(response.conversation)
+		if (response.message.status === 'error') {
+			setError(response.message.error || '问答处理失败。')
+		}
 	} catch (reason) {
 		turn.status = 'error'
 		turn.error = reason instanceof Error ? reason.message : String(reason)
-		persistConversationHistory()
 		setError(reason)
 	} finally {
 		asking.value = false
 		await scrollConversationToBottom()
 	}
+}
+
+/** 更新会话摘要，并把最近使用的会话移动到列表顶部。 */
+function upsertConversation(conversation: ConversationSummary) {
+	conversations.value = [
+		conversation,
+		...conversations.value.filter((item) => item.id !== conversation.id)
+	]
 }
 
 /** 重置表单并打开新建文档弹窗。 */
@@ -306,44 +440,21 @@ async function deleteExistingDocument(document: DocumentSummary) {
 	}
 }
 
-/** 清空当前演示身份在浏览器本地保存的问答历史。 */
-function clearConversationHistory() {
-	conversationTurns.value = []
-	if (activeToken.value) {
-		localStorage.removeItem(getConversationHistoryKey(activeToken.value))
-	}
-}
-
-/** 从 localStorage 恢复当前演示身份的历史问答。 */
-function restoreConversationHistory() {
-	if (!activeToken.value) {
-		conversationTurns.value = []
-		return
-	}
+/** 清空当前用户在数据库中的全部会话与消息。 */
+async function clearConversationHistory() {
+	if (!activeToken.value || !conversations.value.length) return
+	const confirmed = window.confirm('确定清空全部对话记录吗？删除后无法恢复。')
+	if (!confirmed) return
 
 	try {
-		const raw = localStorage.getItem(
-			getConversationHistoryKey(activeToken.value)
-		)
-		const parsed = raw ? JSON.parse(raw) : []
-		conversationTurns.value = Array.isArray(parsed)
-			? parsed.filter(isSavedConversationTurn).slice(-30)
-			: []
-	} catch {
+		await clearConversations(activeToken.value)
+		conversations.value = []
+		activeConversationId.value = ''
 		conversationTurns.value = []
+		localStorage.removeItem(getActiveConversationKey(activeToken.value))
+	} catch (reason) {
+		setError(reason)
 	}
-}
-
-/** 把已完成的问答记录保存到浏览器本地，避免刷新页面后丢失。 */
-function persistConversationHistory() {
-	if (!activeToken.value) return
-	const completedTurns = conversationTurns.value
-		.filter((turn) => turn.status !== 'pending')
-		.slice(-30)
-	localStorage.setItem(
-		getConversationHistoryKey(activeToken.value),
-		JSON.stringify(completedTurns)
-	)
 }
 
 /** 对话增加后自动滚到底部，让最新问答始终可见。 */
@@ -353,28 +464,15 @@ async function scrollConversationToBottom() {
 	if (element) element.scrollTop = element.scrollHeight
 }
 
-/** 为当前演示身份生成本地历史记录 Key。 */
-function getConversationHistoryKey(token: string) {
-	return `${USER_HISTORY_PREFIX}${token}`
+/** 为当前用户保存最近选择的会话 ID。 */
+function getActiveConversationKey(token: string) {
+	return `${ACTIVE_CONVERSATION_PREFIX}${token}`
 }
 
 /** 生成浏览器端对话记录 ID。 */
 function createTurnId() {
 	if (typeof crypto.randomUUID === 'function') return crypto.randomUUID()
 	return `${Date.now()}-${Math.random().toString(36).slice(2)}`
-}
-
-/** 只恢复结构完整的历史记录，避免旧缓存破坏页面渲染。 */
-function isSavedConversationTurn(value: unknown): value is ConversationTurn {
-	if (!value || typeof value !== 'object') return false
-	const turn = value as Partial<ConversationTurn>
-	return (
-		typeof turn.id === 'string' &&
-		typeof turn.question === 'string' &&
-		typeof turn.userName === 'string' &&
-		typeof turn.createdAt === 'number' &&
-		(turn.status === 'answered' || turn.status === 'error')
-	)
 }
 
 /** 把未知异常转换成页面可以直接展示的错误文本。 */
@@ -579,8 +677,8 @@ function formatDate(timestamp: number) {
 						<span class="section-kicker">AI RETRIEVAL</span>
 						<h1>知识问答</h1>
 					</div>
-					<div class="query-heading-actions">
-						<div class="pipeline-labels">
+						<div class="query-heading-actions">
+							<div class="pipeline-labels">
 							<span> <Layers3 :size="14" />Hybrid Search </span>
 							<span> <Sparkles :size="14" />Rerank </span>
 							<span>
@@ -593,14 +691,53 @@ function formatDate(timestamp: number) {
 							</span>
 						</div>
 						<button
-							v-if="conversationTurns.length"
+							class="primary-button compact new-conversation-button"
+							:disabled="creatingConversation"
+							@click="startNewConversation"
+						>
+							<LoaderCircle
+								v-if="creatingConversation"
+								:size="15"
+								class="spinning"
+							/>
+							<Plus v-else :size="15" />
+							新建对话
+						</button>
+						<button
+							v-if="conversations.length"
 							class="icon-button"
-							title="清空对话记录"
+							title="清空全部对话"
 							@click="clearConversationHistory"
 						>
 							<Trash2 :size="15" />
 						</button>
 					</div>
+				</div>
+
+				<div
+					v-if="loadingConversations || conversations.length"
+					class="conversation-tabs"
+					aria-label="历史会话"
+				>
+					<div v-if="loadingConversations" class="conversation-tabs-loading">
+						<LoaderCircle :size="14" class="spinning" />
+						<span>正在加载会话</span>
+					</div>
+					<button
+						v-for="conversation in conversations"
+						:key="conversation.id"
+						type="button"
+						class="conversation-tab"
+						:class="{ active: conversation.id === activeConversationId }"
+						:title="conversation.title"
+						@click="selectConversation(conversation)"
+					>
+						<MessageSquareText :size="14" />
+						<span>
+							<strong>{{ conversation.title }}</strong>
+							<small>{{ conversation.messageCount }} 条对话</small>
+						</span>
+					</button>
 				</div>
 
 				<div ref="conversationRef" class="conversation">

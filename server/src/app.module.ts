@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { AiModule } from './ai/ai.module.js'
 import { AuthModule } from './auth/auth.module.js'
+import { ConversationsModule } from './conversations/conversations.module.js'
 import { DocumentsModule } from './documents/documents.module.js'
 import { HealthController } from './health.controller.js'
 import { KnowledgeModule } from './knowledge/knowledge.module.js'
@@ -16,7 +17,8 @@ import { MongodbModule } from './mongodb/mongodb.module.js'
 		MilvusModule,
 		AiModule,
 		DocumentsModule,
-		KnowledgeModule
+		KnowledgeModule,
+		ConversationsModule
 	],
 	controllers: [HealthController]
 })
