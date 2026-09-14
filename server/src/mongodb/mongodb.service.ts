@@ -20,10 +20,7 @@ export class MongodbService implements OnModuleInit, OnModuleDestroy {
 		const uri = this.config.getOrThrow<string>('MONGODB_URI')
 		const databaseName = this.config.get<string>('MONGODB_DATABASE', 'rag')
 		const serverSelectionTimeoutMS = Number(
-			this.config.get<string>(
-				'MONGODB_SERVER_SELECTION_TIMEOUT_MS',
-				'5000'
-			)
+			this.config.get<string>('MONGODB_SERVER_SELECTION_TIMEOUT_MS', '5000')
 		)
 		const client = new MongoClient(uri, { serverSelectionTimeoutMS })
 

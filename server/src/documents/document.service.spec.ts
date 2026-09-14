@@ -14,8 +14,8 @@ const user: AuthUser = {
   id: "admin-1",
   username: "admin",
   name: "管理员",
-  role: "teacher",
-  roleCode: "teacher",
+  role: "service_staff",
+  roleCode: "service_staff",
 };
 
 const input = {

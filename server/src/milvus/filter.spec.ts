@@ -6,26 +6,25 @@ import {
   escapeFilterValue,
 } from "./filter.js";
 
-const employee: AuthUser = {
+const teacher: AuthUser = {
   token: "token",
   id: "user-1",
-  username: "employee",
+  username: "teacher",
   name: "测试用户",
-
-  role: "service_staff",
-  roleCode: "service_staff",
+  role: "teacher",
+  roleCode: "teacher",
 };
 
 describe("Milvus permission filter", () => {
-  it("企业服务人员只能查看企业公开的启用文档", () => {
-    expect(buildPermissionFilter(employee)).toBe(
-      'is_active == true and visibility == "company"',
+  it("企业管理员可以查看全部启用文档", () => {
+    expect(buildPermissionFilter({ ...teacher, role: "service_staff" })).toBe(
+      "is_active == true",
     );
   });
 
-  it("教师可以查看全部启用文档", () => {
-    expect(buildPermissionFilter({ ...employee, role: "teacher" })).toBe(
-      "is_active == true",
+  it("教师只能查看企业公开的启用文档", () => {
+    expect(buildPermissionFilter(teacher)).toBe(
+      'is_active == true and visibility == "company"',
     );
   });
 

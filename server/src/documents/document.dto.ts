@@ -6,11 +6,6 @@ export class SaveDocumentDto {
 	@MaxLength(120)
 	title: string
 
-	@IsString()
-	@IsNotEmpty()
-	@MaxLength(64)
-	departmentId: string
-
 	@IsIn(['company', 'department'])
 	visibility: 'company' | 'department'
 }
